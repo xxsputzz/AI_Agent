@@ -51,16 +51,15 @@ def start_server():
         # Wait for server to start
         print("Waiting for server to start...")
         sleep(3)
-        
-        # Open browser
+          # Open browser
         webbrowser.open("http://localhost:8000/docs")  # Open Swagger UI
-        webbrowser.open("http://localhost:8000/static/index.html")  # Open our web UI
+        webbrowser.open("http://localhost:8000/static/chat.html")  # Open our chat UI
         
         print("\n" + "="*50)
         print("Document AI Agent Server is running!")
         print("="*50)
         print("API Documentation: http://localhost:8000/docs")
-        print("Web Interface: http://localhost:8000/static/index.html")
+        print("Web Interface: http://localhost:8000/static/chat.html")
         print("\nPress Ctrl+C to stop the server")
         
         # Keep the server running until user interrupts

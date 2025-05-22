@@ -32,6 +32,14 @@ app.add_middleware(
     allow_headers=["*"],  # Allow all headers
 )
 
+# Mount the static files directory
+static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+if os.path.exists(static_dir):
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
+    print(f"Static files mounted from {static_dir}")
+else:
+    print(f"Warning: Static directory not found at {static_dir}")
+
 # Dictionary to store ongoing conversations
 conversations = {}
 
@@ -106,34 +114,38 @@ async def query_agent(request: QueryRequest):
     # Generate conversation ID if not provided
     conversation_id = request.conversation_id or str(uuid.uuid4())
     
-    # Get response from agent
-    response = ai_agent(request.query, request.user_id)
-    
-    # Get relevant documents for context
-    relevant_docs, _ = get_relevant_documents(request.query)
-    
-    # Create response object
-    timestamp = time.time()
-    response_obj = {
-        "response": response,
-        "conversation_id": conversation_id,
-        "user_id": request.user_id,
-        "timestamp": timestamp,
-        "relevant_docs": relevant_docs[:2],  # Just return top 2 for brevity
-        "query": request.query
-    }
-    
-    # Store conversation for history
-    if conversation_id not in conversations:
-        conversations[conversation_id] = []
-    conversations[conversation_id].append({
-        "query": request.query,
-        "response": response,
-        "timestamp": timestamp,
-        "user_id": request.user_id
-    })
-    
-    return response_obj
+    try:
+        # Get response from agent
+        response = ai_agent(request.query, request.user_id)
+        
+        # Get relevant documents for context
+        relevant_docs, _ = get_relevant_documents(request.query)
+        
+        # Create response object
+        timestamp = time.time()
+        response_obj = {
+            "response": response,
+            "conversation_id": conversation_id,
+            "user_id": request.user_id,
+            "timestamp": timestamp,
+            "relevant_docs": relevant_docs[:2] if relevant_docs else [],  # Just return top 2 for brevity
+            "query": request.query
+        }
+        
+        # Store conversation for history
+        if conversation_id not in conversations:
+            conversations[conversation_id] = []
+        conversations[conversation_id].append({
+            "query": request.query,
+            "response": response,
+            "timestamp": timestamp,
+            "user_id": request.user_id
+        })
+        
+        return response_obj
+    except Exception as e:
+        print(f"Error processing query: {e}")
+        raise HTTPException(status_code=500, detail=f"Error processing query: {str(e)}")
 
 # Endpoint to get conversation history
 @app.get("/conversations/{conversation_id}")
@@ -166,6 +178,8 @@ if __name__ == "__main__":
     static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
     if os.path.exists(static_dir):
         app.mount("/static", StaticFiles(directory=static_dir), name="static")
+    else:
+        print(f"Warning: Static directory not found at {static_dir}")
     
     # Run the server
     uvicorn.run("agent_api:app", host="0.0.0.0", port=8000, reload=True)

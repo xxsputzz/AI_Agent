@@ -302,8 +302,7 @@ def get_ollama_response(prompt, model_name=MODEL_NAME):
                     break
         
         print(f"Using Ollama model: {model_name}")
-        
-        # Generate response
+          # Generate response
         response = requests.post(
             "http://localhost:11434/api/generate",
             json={
@@ -311,13 +310,22 @@ def get_ollama_response(prompt, model_name=MODEL_NAME):
                 "prompt": prompt,
                 "stream": False
             },
-            timeout=10
+            timeout=30  # Increased timeout for longer responses
         )
         
         if response.status_code == 200:
-            return response.json().get("response"), None
+            result = response.json().get("response")
+            print(f"Received response from Ollama (length: {len(result) if result else 0})")
+            return result, None
         else:
-            return None, f"Ollama returned error code: {response.status_code}"
+            error_msg = f"Ollama returned error code: {response.status_code}"
+            print(error_msg)
+            try:
+                error_detail = response.json()
+                print(f"Error details: {error_detail}")
+            except:
+                pass
+            return None, error_msg
             
     except requests.exceptions.RequestException as e:
         return None, f"Error connecting to Ollama: {e}"
@@ -366,7 +374,11 @@ def ai_agent(query, user_id=USER_ID):
     
     if error:
         print(f"AI response error: {error}")
-        response = "I'm sorry, but I encountered an error while processing your request. Please try again later."
+        # Provide a more informative fallback response
+        if "Error connecting to Ollama" in error:
+            response = "I'm sorry, but I couldn't connect to the AI language model. Please make sure Ollama is running on your computer (http://localhost:11434)."
+        else:
+            response = "I'm sorry, but I encountered an error while processing your request. Please try again later."
     
     # 5. Add the interaction to conversation history
     add_to_history(user_id, query, response)
