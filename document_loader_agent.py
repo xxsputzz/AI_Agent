@@ -275,12 +275,12 @@ def get_ollama_response(prompt, model_name=MODEL_NAME):
     """Get response from Ollama API"""
     try:
         # Check if Ollama is available
-        version_response = requests.get("http://localhost:11434/api/version", timeout=2)
+        version_response = requests.get("http://localhost:11434/api/version", timeout=3)
         if version_response.status_code != 200:
             return None, "Ollama service is not available"
         
         # Get available models
-        models_response = requests.get("http://localhost:11434/api/tags", timeout=2)
+        models_response = requests.get("http://localhost:11434/api/tags", timeout=3)
         if models_response.status_code != 200:
             return None, "Failed to get available models from Ollama"
         
@@ -302,23 +302,57 @@ def get_ollama_response(prompt, model_name=MODEL_NAME):
                     break
         
         print(f"Using Ollama model: {model_name}")
-          # Generate response
+        
+        # Check if it's a simple greeting (for faster response)
+        query_lower = prompt.split("Current message from user: ")[-1].strip().lower()
+        simple_greetings = ["hi", "hello", "hey", "hi there", "hello there", "good morning", "good afternoon", "good evening"]
+        is_simple_greeting = any(query_lower.startswith(greeting) for greeting in simple_greetings)
+        
+        # Set appropriate timeout and parameters based on query type
+        timeout = 15 if is_simple_greeting else 30
+        
+        # Generate response
         response = requests.post(
             "http://localhost:11434/api/generate",
             json={
                 "model": model_name,
                 "prompt": prompt,
-                "stream": False
+                "stream": False,
+                # Add some parameters to improve response quality and reduce hallucination
+                "options": {
+                    "temperature": 0.7,
+                    "top_p": 0.95,
+                    "top_k": 40
+                }
             },
-            timeout=30  # Increased timeout for longer responses
+            timeout=timeout  # Adjusted timeout based on query type
         )
         
         if response.status_code == 200:
             result = response.json().get("response")
             print(f"Received response from Ollama (length: {len(result) if result else 0})")
+            
+            # For simple greetings, ensure response is brief
+            if is_simple_greeting and result and len(result) > 100:
+                result = result.split('.')[0] + '.'  # Just keep the first sentence
+            
             return result, None
         else:
             error_msg = f"Ollama returned error code: {response.status_code}"
+            if response.text:
+                try:
+                    error_details = response.json()
+                    error_msg += f" - {error_details.get('error', '')}"
+                except:
+                    error_msg += f" - {response.text[:100]}"
+            return None, error_msg
+            
+    except requests.exceptions.Timeout:
+        return None, "Request to Ollama timed out. The model might be taking too long to respond."
+    except requests.exceptions.ConnectionError:
+        return None, "Error connecting to Ollama. Make sure the Ollama service is running on localhost:11434."
+    except Exception as e:
+        return None, f"Error getting response from Ollama: {str(e)}"
             print(error_msg)
             try:
                 error_detail = response.json()
@@ -334,25 +368,58 @@ def get_ollama_response(prompt, model_name=MODEL_NAME):
 
 def create_prompt(query, doc_chunks, doc_metadata, history_chunks):
     """Create a prompt with context from documents and conversation history"""
-    # Start with system instructions
-    prompt = "You are a helpful AI assistant that answers questions based on the provided documents.\n\n"
+    # Check if this is a simple greeting
+    query_lower = query.lower().strip()
+    simple_greetings = ["hi", "hello", "hey", "hi there", "hello there", "good morning", "good afternoon", "good evening", "howdy", "greetings", "sup", "what's up", "hiya"]
+    is_simple_greeting = query_lower in simple_greetings or query_lower.startswith("hello") or query_lower.startswith("hi ")
     
-    # Add document context
-    if doc_chunks:
-        prompt += "Here are some relevant document excerpts:\n\n"
+    # Start with system instructions, but customized based on query type
+    if is_simple_greeting:
+        prompt = """You are a friendly AI assistant having a casual conversation. For this simple greeting, keep your response extremely brief and casual.
+
+IMPORTANT INSTRUCTIONS:
+1. This is just a simple greeting, so respond with a short friendly greeting only (1-2 sentences maximum)
+2. DO NOT introduce yourself, explain your capabilities, or ask how you can help
+3. DO NOT mention any documents or information - this is just casual conversation
+4. Respond as a friend would to a simple "hi" or "hello" - be warm but brief
+5. AVOID lengthy responses - keep it to 10-15 words maximum
+
+"""
+    else:
+        prompt = """You are a helpful AI assistant having a natural conversation with a user. Your responses should be friendly, concise, and direct.
+
+IMPORTANT INSTRUCTIONS:
+1. Respond in a natural, conversational way as if you're chatting with a friend
+2. Keep responses short and to the point unless the user clearly asks for detailed information
+3. For simple greetings like 'hi', 'hello', etc., just respond with a simple friendly greeting
+4. ONLY include document information when directly relevant to a specific question
+5. NEVER mention or show the documents in your response unless specifically asked about them
+6. DO NOT paste document content or reference it directly in casual conversation
+7. Format your response with clear paragraphs and proper spacing for readability
+8. AVOID academic or formal language unless the question requires it
+
+"""
+    
+    # Add document context only for non-greeting queries
+    if doc_chunks and not is_simple_greeting:
+        prompt += "Here are some relevant document excerpts (ONLY reference this information if directly asked a specific question about this topic):\n\n"
         for i, (chunk, meta) in enumerate(zip(doc_chunks, doc_metadata)):
             source = meta.get("source", "Unknown")
             prompt += f"[DOCUMENT {i+1}] From {source}:\n{chunk}\n\n"
     
-    # Add conversation history context if available
-    if history_chunks:
-        prompt += "Here is some relevant conversation history:\n\n"
+    # Add conversation history context if available, but with clear instructions
+    if history_chunks and not is_simple_greeting:
+        prompt += "Here is some relevant conversation history (use only for context, DO NOT reference or repeat this history in your response):\n\n"
         for i, history in enumerate(history_chunks):
             prompt += f"[HISTORY {i+1}]:\n{history}\n\n"
     
     # Add the current query
-    prompt += f"Current question: {query}\n\n"
-    prompt += "Please provide a helpful, accurate, and concise answer based on the document context provided. If the information isn't in the documents, say so."
+    prompt += f"Current message from user: {query}\n\n"
+    
+    if is_simple_greeting:
+        prompt += "Remember, this is just a simple greeting, so respond with a brief, friendly hello only. Do not add any other information or questions."
+    else:
+        prompt += "Remember to respond naturally and conversationally. If the user is just saying hello or making small talk, respond in kind without referencing any documents. If they ask a specific question that's in the documents, answer it clearly and concisely."
     
     return prompt
 
@@ -360,11 +427,22 @@ def ai_agent(query, user_id=USER_ID):
     """Main agent function that orchestrates the response pipeline"""
     print(f"Processing query: '{query}'")
     
-    # 1. Get relevant conversation history
-    history_chunks = get_relevant_history(user_id, query)
+    # Check if this is a simple greeting
+    query_lower = query.lower().strip()
+    simple_greetings = ["hi", "hello", "hey", "hi there", "hello there", "good morning", "good afternoon", "good evening", "howdy", "greetings", "sup", "what's up", "hiya"]
+    is_simple_greeting = query_lower in simple_greetings or query_lower.startswith("hello") or query_lower.startswith("hi ")
     
-    # 2. Get relevant document chunks
-    doc_chunks, doc_metadata = get_relevant_documents(query)
+    # For simple greetings, we can bypass some of the processing for faster responses
+    if is_simple_greeting:
+        print("Detected simple greeting, using optimized response path")
+        history_chunks = []
+        doc_chunks, doc_metadata = [], []
+    else:
+        # 1. Get relevant conversation history
+        history_chunks = get_relevant_history(user_id, query)
+        
+        # 2. Get relevant document chunks
+        doc_chunks, doc_metadata = get_relevant_documents(query)
     
     # 3. Create the prompt with context
     prompt = create_prompt(query, doc_chunks, doc_metadata, history_chunks)
@@ -379,6 +457,16 @@ def ai_agent(query, user_id=USER_ID):
             response = "I'm sorry, but I couldn't connect to the AI language model. Please make sure Ollama is running on your computer (http://localhost:11434)."
         else:
             response = "I'm sorry, but I encountered an error while processing your request. Please try again later."
+    
+    # For simple greetings, ensure the response is really simple and brief
+    if is_simple_greeting and response and len(response) > 100:
+        print("Simplifying greeting response")
+        # Just keep the first sentence or first 50 characters, whichever is shorter
+        first_sentence = response.split('.')[0].strip() + '.'
+        if len(first_sentence) > 50:
+            response = first_sentence[:47] + '...'
+        else:
+            response = first_sentence
     
     # 5. Add the interaction to conversation history
     add_to_history(user_id, query, response)

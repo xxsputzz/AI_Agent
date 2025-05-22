@@ -46,9 +46,7 @@
             display: flex;
             flex-direction: column;
             height: 100%;
-        }
-
-        .chat-container {
+        }        .chat-container {
             flex: 1;
             overflow-y: auto;
             padding: 1rem;
@@ -67,8 +65,10 @@
             max-width: 75%;
             align-self: flex-end;
             word-wrap: break-word;
-        }
-
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 0.3s ease-in-out;
+        }        
+        
         .bot-message {
             background-color: var(--primary-dark);
             color: #121212;
@@ -77,6 +77,43 @@
             margin: 0.75rem 0;
             max-width: 75%;
             word-wrap: break-word;
+            white-space: pre-wrap;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Code formatting */
+        .bot-message pre, .bot-message code {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            padding: 0.25rem 0.5rem;
+            font-family: monospace;
+            margin: 0.5rem 0;
+            overflow-x: auto;
+        }
+
+        .bot-message pre {
+            padding: 0.75rem 1rem;
+            border-left: 3px solid var(--secondary-dark);
+        }
+
+        .bot-message p {
+            margin-bottom: 0.75rem;
+        }
+
+        .bot-message a {
+            color: var(--secondary-dark);
+            text-decoration: underline;
+            transition: color 0.2s ease;
+        }
+
+        .bot-message a:hover {
+            color: white;
         }
 
         .input-area {
@@ -233,9 +270,7 @@
         const API_URL = 'http://localhost:8000';
         let conversationId = null;
         let userId = `user_${Math.floor(Math.random() * 10000)}`;
-        let isProcessing = false;
-
-        // Check server health on load
+        let isProcessing = false;        // Check server health on load
         window.onload = async function() {
             try {
                 const response = await fetch(`${API_URL}/health`);
@@ -247,6 +282,12 @@
                         </span>
                         Connected to server
                     `;
+                    
+                    // Add welcome message
+                    addMessageToChat('bot', `
+                        <p>👋 Hello there! I'm your AI assistant.</p>
+                        <p>How can I help you today? You can ask me questions about your documents or just chat with me.</p>
+                    `);
                 } else {
                     document.getElementById('status').innerHTML = `
                         <span class="icon has-text-warning">
@@ -356,13 +397,33 @@
             chatContainer.scrollTop = chatContainer.scrollHeight;
             
             return messageId;
-        }
-
-        // Replace a message in the chat container
+        }        // Replace a message in the chat container
         function replaceMessage(messageId, sender, text) {
             const messageDiv = document.getElementById(messageId);
             if (messageDiv) {
-                messageDiv.innerHTML = text;
+                // Format code blocks
+                let formattedText = text;
+                
+                // Replace code blocks with proper HTML
+                formattedText = formattedText.replace(/```(\w*)([\s\S]*?)```/g, function(match, language, code) {
+                    return `<pre><code class="language-${language}">${code.trim()}</code></pre>`;
+                });
+                
+                // Replace inline code
+                formattedText = formattedText.replace(/`([^`]+)`/g, '<code>$1</code>');
+                
+                // Handle simple line breaks (preserve them)
+                formattedText = formattedText.replace(/\n/g, '<br>');
+                
+                // Now wrap paragraphs (separate by double line breaks)
+                formattedText = formattedText.split('<br><br>').map(para => 
+                    para.trim() ? `<p>${para}</p>` : ''
+                ).join('');
+                
+                // Fix any double <br> tags that might have been created
+                formattedText = formattedText.replace(/<br><br>/g, '<br>');
+                
+                messageDiv.innerHTML = formattedText || text;
                 
                 // Scroll to the message
                 messageDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
