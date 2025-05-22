@@ -1,0 +1,84 @@
+# Useful Git Commands
+
+## Basic Commands
+
+1. Check repository status:
+   ```
+   git status
+   ```
+
+2. View commit history:
+   ```
+   git log
+   ```
+
+3. Create and switch to a new branch:
+   ```
+   git checkout -b new-feature-name
+   ```
+
+4. Save changes and commit them:
+   ```
+   git add .
+   git commit -m "Description of your changes"
+   ```
+
+5. Switch between branches:
+   ```
+   git checkout branch-name
+   ```
+
+## Remote Repository Commands
+
+6. Add a remote repository:
+   ```
+   git remote add origin https://github.com/yourusername/yourrepository.git
+   ```
+
+7. Push changes to remote repository:
+   ```
+   git push -u origin master
+   ```
+
+8. Pull changes from remote repository:
+   ```
+   git pull origin master
+   ```
+
+9. Clone a repository:
+   ```
+   git clone https://github.com/username/repository.git
+   ```
+
+## Other Useful Commands
+
+10. Discard changes in a file:
+    ```
+    git checkout -- filename
+    ```
+
+11. See differences between staged changes and last commit:
+    ```
+    git diff --staged
+    ```
+
+12. Merge a branch into the current branch:
+    ```
+    git merge branch-name
+    ```
+
+13. Create a tag (for releases):
+    ```
+    git tag -a v1.0 -m "Version 1.0"
+    ```
+
+14. Stash changes temporarily:
+    ```
+    git stash
+    git stash pop  # to restore stashed changes
+    ```
+
+15. Show configuration:
+    ```
+    git config --list
+    ```
