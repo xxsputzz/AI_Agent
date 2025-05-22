@@ -1,0 +1,107 @@
+[1mdiff --git a/document_loader_agent.py b/document_loader_agent.py[m
+[1mindex f6a67aa..c520d48 100644[m
+[1m--- a/document_loader_agent.py[m
+[1m+++ b/document_loader_agent.py[m
+[36m@@ -335,24 +335,24 @@[m [mdef get_ollama_response(prompt, model_name=MODEL_NAME):[m
+ def create_prompt(query, doc_chunks, doc_metadata, history_chunks):[m
+     """Create a prompt with context from documents and conversation history"""[m
+     # Start with system instructions[m
+[31m-    prompt = "You are a helpful AI assistant that answers questions based on the provided documents.\n\n"[m
+[32m+[m[32m    prompt = "You are a helpful AI assistant that answers questions based on the provided documents. Respond in a natural, conversational way as if you're having a direct conversation with the user. Don't reference that you're using documents unless it's relevant to the answer.\n\n"[m
+     [m
+     # Add document context[m
+     if doc_chunks:[m
+[31m-        prompt += "Here are some relevant document excerpts:\n\n"[m
+[32m+[m[32m        prompt += "Here are some relevant document excerpts (use this information to inform your response, but don't mention these documents unless necessary):\n\n"[m
+         for i, (chunk, meta) in enumerate(zip(doc_chunks, doc_metadata)):[m
+             source = meta.get("source", "Unknown")[m
+             prompt += f"[DOCUMENT {i+1}] From {source}:\n{chunk}\n\n"[m
+     [m
+[31m-    # Add conversation history context if available[m
+[32m+[m[32m    # Add conversation history context if available, but with clear instructions[m
+     if history_chunks:[m
+[31m-        prompt += "Here is some relevant conversation history:\n\n"[m
+[32m+[m[32m        prompt += "Here is some relevant conversation history (you can use this for context, but don't repeat or reference this history directly in your response unless necessary):\n\n"[m
+         for i, history in enumerate(history_chunks):[m
+             prompt += f"[HISTORY {i+1}]:\n{history}\n\n"[m
+     [m
+     # Add the current query[m
+     prompt += f"Current question: {query}\n\n"[m
+[31m-    prompt += "Please provide a helpful, accurate, and concise answer based on the document context provided. If the information isn't in the documents, say so."[m
+[32m+[m[32m    prompt += "Please provide a helpful, accurate, and conversational answer. Respond directly to the current question without mentioning that you're using previous conversations or documents. Format your response clearly with proper paragraphs for readability. If the information isn't in the documents, just respond naturally as you would in a normal conversation."[m
+     [m
+     return prompt[m
+ [m
+[1mdiff --git a/static/chat.html b/static/chat.html[m
+[1mindex c60c9b8..cf55498 100644[m
+[1m--- a/static/chat.html[m
+[1m+++ b/static/chat.html[m
+[36m@@ -67,9 +67,7 @@[m
+             max-width: 75%;[m
+             align-self: flex-end;[m
+             word-wrap: break-word;[m
+[31m-        }[m
+[31m-[m
+[31m-        .bot-message {[m
+[32m+[m[32m        }        .bot-message {[m
+             background-color: var(--primary-dark);[m
+             color: #121212;[m
+             padding: 0.75rem 1rem;[m
+[36m@@ -77,6 +75,25 @@[m
+             margin: 0.75rem 0;[m
+             max-width: 75%;[m
+             word-wrap: break-word;[m
+[32m+[m[32m            white-space: pre-wrap;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        /* Code formatting */[m
+[32m+[m[32m        .bot-message pre, .bot-message code {[m
+[32m+[m[32m            background-color: rgba(0, 0, 0, 0.2);[m
+[32m+[m[32m            border-radius: 4px;[m
+[32m+[m[32m            padding: 0.25rem 0.5rem;[m
+[32m+[m[32m            font-family: monospace;[m
+[32m+[m[32m            margin: 0.5rem 0;[m
+[32m+[m[32m            overflow-x: auto;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        .bot-message pre {[m
+[32m+[m[32m            padding: 0.75rem 1rem;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        .bot-message p {[m
+[32m+[m[32m            margin-bottom: 0.75rem;[m
+         }[m
+ [m
+         .input-area {[m
+[36m@@ -356,13 +373,27 @@[m
+             chatContainer.scrollTop = chatContainer.scrollHeight;[m
+             [m
+             return messageId;[m
+[31m-        }[m
+[31m-[m
+[31m-        // Replace a message in the chat container[m
+[32m+[m[32m        }        // Replace a message in the chat container[m
+         function replaceMessage(messageId, sender, text) {[m
+             const messageDiv = document.getElementById(messageId);[m
+             if (messageDiv) {[m
+[31m-                messageDiv.innerHTML = text;[m
+[32m+[m[32m                // Format code blocks[m
+[32m+[m[32m                let formattedText = text;[m
+[32m+[m[41m                [m
+[32m+[m[32m                // Replace code blocks with proper HTML[m
+[32m+[m[32m                formattedText = formattedText.replace(/```(\w*)([\s\S]*?)```/g, function(match, language, code) {[m
+[32m+[m[32m                    return `<pre><code class="language-${language}">${code.trim()}</code></pre>`;[m
+[32m+[m[32m                });[m
+[32m+[m[41m                [m
+[32m+[m[32m                // Replace inline code[m
+[32m+[m[32m                formattedText = formattedText.replace(/`([^`]+)`/g, '<code>$1</code>');[m
+[32m+[m[41m                [m
+[32m+[m[32m                // Convert line breaks to paragraphs[m
+[32m+[m[32m                formattedText = formattedText.split('\n\n').map(para =>[m[41m [m
+[32m+[m[32m                    para.trim() ? `<p>${para.replace(/\n/g, '<br>')}</p>` : ''[m
+[32m+[m[32m                ).join('');[m
+[32m+[m[41m                [m
+[32m+[m[32m                messageDiv.innerHTML = formattedText || text;[m
+                 [m
+                 // Scroll to the message[m
+                 messageDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });[m

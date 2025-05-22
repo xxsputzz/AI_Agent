@@ -14,7 +14,9 @@ from fastapi.staticfiles import StaticFiles
 import os
 
 # Import the agent functionality
-from document_loader_agent import ai_agent, index_documents, get_relevant_documents, get_relevant_history
+from document_loader_agent import ai_agent
+from documents import get_relevant_documents, index_documents, doc_collection
+from history import get_relevant_history
 
 # Create the FastAPI app
 app = FastAPI(
@@ -74,7 +76,7 @@ class HealthResponse(BaseModel):
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
     """Check the health of the API"""
-    from document_loader_agent import doc_collection
+    from documents import doc_collection
     doc_count = doc_collection.count() if doc_collection else 0
     
     return {
