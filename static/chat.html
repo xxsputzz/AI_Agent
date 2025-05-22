@@ -230,8 +230,7 @@
     </section>
 
     <section class="section">
-        <div class="container">
-            <div class="chat-container" id="chat-container">
+        <div class="container">            <div class="chat-container" id="chat-container">
                 <div class="bot-message">
                     Hello! I'm your AI assistant. How can I help you today?
                 </div>
@@ -275,19 +274,14 @@
             try {
                 const response = await fetch(`${API_URL}/health`);
                 const data = await response.json();
-                if (data.status === 'ok') {
-                    document.getElementById('status').innerHTML = `
+                if (data.status === 'ok') {                    document.getElementById('status').innerHTML = `
                         <span class="icon has-text-success">
                             <i class="fas fa-check-circle"></i>
                         </span>
                         Connected to server
                     `;
                     
-                    // Add welcome message
-                    addMessageToChat('bot', `
-                        <p>👋 Hello there! I'm your AI assistant.</p>
-                        <p>How can I help you today? You can ask me questions about your documents or just chat with me.</p>
-                    `);
+                    // We don't need to add another welcome message as we already have one in the HTML
                 } else {
                     document.getElementById('status').innerHTML = `
                         <span class="icon has-text-warning">

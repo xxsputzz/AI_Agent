@@ -310,8 +310,7 @@ def get_ollama_response(prompt, model_name=MODEL_NAME):
         
         # Set appropriate timeout and parameters based on query type
         timeout = 15 if is_simple_greeting else 30
-        
-        # Generate response
+          # Generate response
         response = requests.post(
             "http://localhost:11434/api/generate",
             json={
@@ -345,6 +344,7 @@ def get_ollama_response(prompt, model_name=MODEL_NAME):
                     error_msg += f" - {error_details.get('error', '')}"
                 except:
                     error_msg += f" - {response.text[:100]}"
+            print(error_msg)
             return None, error_msg
             
     except requests.exceptions.Timeout:
@@ -353,18 +353,6 @@ def get_ollama_response(prompt, model_name=MODEL_NAME):
         return None, "Error connecting to Ollama. Make sure the Ollama service is running on localhost:11434."
     except Exception as e:
         return None, f"Error getting response from Ollama: {str(e)}"
-            print(error_msg)
-            try:
-                error_detail = response.json()
-                print(f"Error details: {error_detail}")
-            except:
-                pass
-            return None, error_msg
-            
-    except requests.exceptions.RequestException as e:
-        return None, f"Error connecting to Ollama: {e}"
-    except Exception as e:
-        return None, f"Unexpected error: {e}"
 
 def create_prompt(query, doc_chunks, doc_metadata, history_chunks):
     """Create a prompt with context from documents and conversation history"""
@@ -372,8 +360,7 @@ def create_prompt(query, doc_chunks, doc_metadata, history_chunks):
     query_lower = query.lower().strip()
     simple_greetings = ["hi", "hello", "hey", "hi there", "hello there", "good morning", "good afternoon", "good evening", "howdy", "greetings", "sup", "what's up", "hiya"]
     is_simple_greeting = query_lower in simple_greetings or query_lower.startswith("hello") or query_lower.startswith("hi ")
-    
-    # Start with system instructions, but customized based on query type
+      # Start with system instructions, but customized based on query type
     if is_simple_greeting:
         prompt = """You are a friendly AI assistant having a casual conversation. For this simple greeting, keep your response extremely brief and casual.
 
@@ -382,7 +369,8 @@ IMPORTANT INSTRUCTIONS:
 2. DO NOT introduce yourself, explain your capabilities, or ask how you can help
 3. DO NOT mention any documents or information - this is just casual conversation
 4. Respond as a friend would to a simple "hi" or "hello" - be warm but brief
-5. AVOID lengthy responses - keep it to 10-15 words maximum
+5. AVOID lengthy responses - keep it simple and brief
+6. DO NOT include any meta-text like "Responsive:" or "(10-15 words)" or "Casual..." in your response
 
 """
     else:
@@ -391,12 +379,14 @@ IMPORTANT INSTRUCTIONS:
 IMPORTANT INSTRUCTIONS:
 1. Respond in a natural, conversational way as if you're chatting with a friend
 2. Keep responses short and to the point unless the user clearly asks for detailed information
-3. For simple greetings like 'hi', 'hello', etc., just respond with a simple friendly greeting
+3. For simple questions, give concise answers (1-2 paragraphs) and ask if they'd like to know more
 4. ONLY include document information when directly relevant to a specific question
 5. NEVER mention or show the documents in your response unless specifically asked about them
 6. DO NOT paste document content or reference it directly in casual conversation
 7. Format your response with clear paragraphs and proper spacing for readability
 8. AVOID academic or formal language unless the question requires it
+9. NEVER include meta-instructions, formatting notes, or labels like "Responsive:" in your actual response
+10. DO NOT include examples of conversations or sample dialogues in your response
 
 """
     
