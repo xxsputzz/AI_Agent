@@ -3,97 +3,149 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document AI Agent</title>
+    <title>AI Agent Chat</title>
+    <!-- Bulma CSS Framework -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
+        /* Dark Mode Theme */
+        :root {
+            --background-dark: #121212;
+            --surface-dark: #1e1e1e;
+            --primary-dark: #bb86fc;
+            --secondary-dark: #03dac6;
+            --on-background-dark: #e1e1e1;
+            --on-surface-dark: #a1a1a1;
         }
+
+        html, body {
+            background-color: var(--background-dark);
+            color: var(--on-background-dark);
+            height: 100%;
+            overflow-x: hidden;
+        }
+
+        .hero.is-dark {
+            background-color: var(--surface-dark);
+        }
+
+        .box {
+            background-color: var(--surface-dark);
+            color: var(--on-background-dark);
+            border: 1px solid #333;
+        }
+
         .chat-container {
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            padding: 10px;
-            height: 400px;
+            height: 60vh;
             overflow-y: auto;
-            margin-bottom: 10px;
-            background-color: #f9f9f9;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background-color: var(--surface-dark);
+            border-radius: 6px;
+            border: 1px solid #333;
         }
+
         .user-message {
-            background-color: #e3f2fd;
-            padding: 8px 12px;
-            border-radius: 15px;
-            margin: 5px 0;
-            max-width: 70%;
+            background-color: #4a4a4a;
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 1rem;
+            margin: 0.5rem 0;
+            max-width: 75%;
             align-self: flex-end;
             margin-left: auto;
+            word-wrap: break-word;
         }
+
         .bot-message {
-            background-color: #f1f1f1;
-            padding: 8px 12px;
-            border-radius: 15px;
-            margin: 5px 0;
-            max-width: 70%;
+            background-color: var(--primary-dark);
+            color: #121212;
+            padding: 0.75rem 1rem;
+            border-radius: 1rem;
+            margin: 0.5rem 0;
+            max-width: 75%;
+            word-wrap: break-word;
         }
-        .input-container {
-            display: flex;
-        }
-        #user-input {
-            flex-grow: 1;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            margin-right: 10px;
-        }
-        button {
-            padding: 10px 15px;
-            background-color: #4CAF50;
+
+        .input-field textarea {
+            background-color: #2a2a2a;
             color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
+            border-color: #444;
         }
-        button:hover {
-            background-color: #45a049;
+
+        .input-field textarea:focus {
+            border-color: var(--primary-dark);
+            box-shadow: 0 0 0 0.125em rgba(187, 134, 252, 0.25);
         }
+
+        .button.is-primary {
+            background-color: var(--primary-dark);
+            color: #121212;
+        }
+
+        .button.is-primary:hover {
+            background-color: #a56cf8;
+        }
+
         .status {
-            color: #666;
+            color: var(--on-surface-dark);
             font-style: italic;
-            margin-top: 10px;
+            margin: 0.5rem 0;
         }
-        .docs-container {
-            margin-top: 20px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            background-color: #f5f5f5;
+
+        /* Custom scrollbar for Webkit browsers */
+        ::-webkit-scrollbar {
+            width: 8px;
         }
-        .docs-container h3 {
-            margin-top: 0;
+        
+        ::-webkit-scrollbar-track {
+            background: #2a2a2a;
         }
-        .doc-item {
-            margin-bottom: 5px;
-            font-size: 0.9em;
+        
+        ::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #777;
         }
     </style>
 </head>
 <body>
-    <h1>Document AI Agent</h1>
-    <div class="status" id="status">Connecting to server...</div>
-    
-    <div class="chat-container" id="chat-container"></div>
-    
-    <div class="input-container">
-        <input type="text" id="user-input" placeholder="Ask a question about your documents..." />
-        <button onclick="sendMessage()">Send</button>
-    </div>
-    
-    <div class="docs-container">
-        <h3>Related Documents</h3>
-        <div id="docs-list">No documents loaded yet.</div>
-        <button onclick="reindexDocuments()" id="reindex-btn">Reindex Documents</button>
-    </div>
+    <section class="hero is-dark">
+        <div class="hero-body">
+            <div class="container">
+                <h1 class="title">
+                    <i class="fas fa-robot mr-2"></i>AI Agent
+                </h1>
+                <div class="status" id="status">Connecting to server...</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <div class="chat-container" id="chat-container"></div>
+            
+            <div class="field input-field">
+                <div class="control">
+                    <textarea class="textarea" id="user-input" rows="2" placeholder="Type your message here..."></textarea>
+                </div>
+            </div>
+            
+            <div class="field">
+                <div class="control">
+                    <button class="button is-primary is-fullwidth" onclick="sendMessage()">
+                        <span class="icon">
+                            <i class="fas fa-paper-plane"></i>
+                        </span>
+                        <span>Send Message</span>
+                    </button>
+                </div>
+            </div>
+        </div>    </section>
 
     <script>
         const API_URL = 'http://localhost:8000';
@@ -106,10 +158,9 @@
                 const response = await fetch(`${API_URL}/health`);
                 const data = await response.json();
                 if (data.status === 'ok') {
-                    document.getElementById('status').innerText = 
-                        `Connected to server. ${data.documents_indexed} documents indexed.`;
+                    document.getElementById('status').innerText = 'Connected to server';
                 } else {
-                    document.getElementById('status').innerText = 'Server is not ready.';
+                    document.getElementById('status').innerText = 'Server is not ready';
                 }
             } catch (error) {
                 document.getElementById('status').innerText = 
@@ -130,7 +181,7 @@
             userInput.value = '';
             
             // Add loading message
-            const loadingId = addMessageToChat('bot', 'Thinking...');
+            const loadingId = addMessageToChat('bot', '<div class="is-loading"><span class="icon"><i class="fas fa-spinner fa-pulse"></i></span> Thinking...</div>');
             
             try {
                 const response = await fetch(`${API_URL}/query`, {
@@ -159,9 +210,6 @@
                 // Replace loading message with actual response
                 replaceMessage(loadingId, 'bot', data.response);
                 
-                // Update related documents
-                updateRelatedDocs(data.relevant_docs);
-                
             } catch (error) {
                 console.error('Error sending message:', error);
                 replaceMessage(loadingId, 'bot', 'Sorry, there was an error processing your request.');
@@ -174,7 +222,7 @@
             const messageDiv = document.createElement('div');
             
             messageDiv.className = sender === 'user' ? 'user-message' : 'bot-message';
-            messageDiv.innerText = text;
+            messageDiv.innerHTML = text;
             
             const messageId = `msg-${Date.now()}`;
             messageDiv.id = messageId;
@@ -189,73 +237,14 @@
         function replaceMessage(messageId, sender, text) {
             const messageDiv = document.getElementById(messageId);
             if (messageDiv) {
-                messageDiv.innerText = text;
+                messageDiv.innerHTML = text;
             }
         }
 
-        // Update the related documents section
-        function updateRelatedDocs(docs) {
-            const docsContainer = document.getElementById('docs-list');
-            
-            if (!docs || docs.length === 0) {
-                docsContainer.innerText = 'No related documents found.';
-                return;
-            }
-            
-            docsContainer.innerHTML = '';
-            docs.forEach((doc, index) => {
-                const docDiv = document.createElement('div');
-                docDiv.className = 'doc-item';
-                // Show a snippet of the document text
-                const snippet = doc.length > 100 ? doc.substring(0, 100) + '...' : doc;
-                docDiv.innerText = `Document ${index + 1}: ${snippet}`;
-                docsContainer.appendChild(docDiv);
-            });
-        }
-
-        // Reindex documents
-        async function reindexDocuments() {
-            const button = document.getElementById('reindex-btn');
-            button.disabled = true;
-            button.innerText = 'Reindexing...';
-            
-            try {
-                const response = await fetch(`${API_URL}/index`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        reload: true
-                    }),
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                document.getElementById('status').innerText = 
-                    `${data.message}`;
-                
-                // Re-enable button after 3 seconds
-                setTimeout(() => {
-                    button.disabled = false;
-                    button.innerText = 'Reindex Documents';
-                }, 3000);
-                
-            } catch (error) {
-                console.error('Error reindexing documents:', error);
-                document.getElementById('status').innerText = 
-                    'Failed to reindex documents.';
-                button.disabled = false;
-                button.innerText = 'Reindex Documents';
-            }
-        }
-
-        // Allow sending message with Enter key
-        document.getElementById('user-input').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
+        // Allow sending message with Enter key (but allow Shift+Enter for new lines)
+        document.getElementById('user-input').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
                 sendMessage();
             }
         });
