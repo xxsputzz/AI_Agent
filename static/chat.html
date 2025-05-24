@@ -54,34 +54,120 @@
             background-color: var(--surface-dark);
             border-radius: 6px;
             border: 1px solid #333;
+        }        .chat-container {
+            display: flex;
+            flex-direction: column;
         }
 
-        .user-message {
+        /* Message styling */        .bot-message {
+            background-color: var(--primary-dark);
+            color: #121212;
+            padding: 1rem 1.25rem;
+            border-radius: 1rem 1rem 1rem 0;
+            margin: 0.75rem 2rem 0.75rem 0;
+            max-width: 75%;
+            align-self: flex-start;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 0.3s ease-in-out;
+            overflow-x: auto;
+            line-height: 1.5;
+            position: relative;
+        }
+        
+        .bot-message p {
+            margin: 0.75rem 0;
+        }
+        
+        .bot-message p:first-child {
+            margin-top: 0;
+        }
+        
+        .bot-message p:last-child {
+            margin-bottom: 0;
+        }
+        
+        .bot-message.typing {
+            padding: 0.75rem 1rem;
+            background-color: var(--primary-dark);
+            opacity: 0.8;
+        }
+          .user-message {
             background-color: #4a4a4a;
             color: white;
-            padding: 0.75rem 1rem;
+            padding: 1rem 1.25rem;
             border-radius: 1rem 1rem 0 1rem;
+            margin: 0.75rem 0 0.75rem 2rem;
+            align-self: flex-end;
             margin: 0.75rem 0 0.75rem auto;
             max-width: 75%;
             align-self: flex-end;
             word-wrap: break-word;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
             animation: fadeIn 0.3s ease-in-out;
-        }        
-        
-        .bot-message {
-            background-color: var(--primary-dark);
-            color: #121212;
-            padding: 0.75rem 1rem;
-            border-radius: 1rem 1rem 1rem 0;
-            margin: 0.75rem 0;
-            max-width: 75%;
-            word-wrap: break-word;
-            white-space: pre-wrap;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            animation: fadeIn 0.3s ease-in-out;
+            line-height: 1.5;
         }
 
+        /* Input area styling */
+        .input-area {
+            margin-top: auto;
+            padding: 1rem;
+            background-color: var(--surface-dark);
+            border-top: 1px solid #333;
+        }
+        
+        .input-field textarea {
+            background-color: #2a2a2a;
+            color: white;
+            border-color: #444;
+            resize: none;
+            transition: all 0.3s ease;
+        }
+        
+        .input-field textarea:disabled {
+            background-color: #2a2a2a;
+            color: #888;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        
+        .input-field textarea:focus {
+            border-color: var(--primary-dark);
+            box-shadow: 0 0 0 0.125em rgba(187, 134, 252, 0.25);
+            background-color: #2a2a2a;
+        }
+        
+        /* Typing indicator */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0;
+        }
+        
+        .typing-dot {
+            width: 0.5rem;
+            height: 0.5rem;
+            background-color: #121212;
+            border-radius: 50%;
+            opacity: 0.7;
+            animation: typingAnimation 1s infinite ease-in-out;
+        }
+        
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typingAnimation {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-0.25rem); }
+        }
+        
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -118,12 +204,16 @@
 
         .input-area {
             margin-top: auto;
-        }
-
-        .input-field textarea {
+        }        .input-field textarea {
             background-color: #2a2a2a;
             color: white;
             border-color: #444;
+        }
+
+        .input-field textarea:disabled {
+            background-color: #2a2a2a;
+            color: #888;
+            cursor: not-allowed;
         }
 
         .input-field textarea:focus {
@@ -144,43 +234,31 @@
             color: var(--on-surface-dark);
             font-style: italic;
             margin: 0.5rem 0;
+        }        /* Typing indicator */        .typing-indicator {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 0;
+            margin-left: 25px;
         }
 
-        /* Loading animation */
-        .dot-typing {
-            position: relative;
-            left: -9999px;
-            width: 10px;
-            height: 10px;
-            border-radius: 5px;
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            margin: 0 2px;
             background-color: #121212;
-            color: #121212;
-            box-shadow: 9984px 0 0 0 #121212, 9999px 0 0 0 #121212, 10014px 0 0 0 #121212;
-            animation: dot-typing 1.5s infinite linear;
+            border-radius: 50%;
+            animation: typing 1.4s infinite ease-in-out;
+            opacity: 0.6;
         }
 
-        @keyframes dot-typing {
-            0% {
-                box-shadow: 9984px 0 0 0 #121212, 9999px 0 0 0 #121212, 10014px 0 0 0 #121212;
-            }
-            16.667% {
-                box-shadow: 9984px -10px 0 0 #121212, 9999px 0 0 0 #121212, 10014px 0 0 0 #121212;
-            }
-            33.333% {
-                box-shadow: 9984px 0 0 0 #121212, 9999px 0 0 0 #121212, 10014px 0 0 0 #121212;
-            }
-            50% {
-                box-shadow: 9984px 0 0 0 #121212, 9999px -10px 0 0 #121212, 10014px 0 0 0 #121212;
-            }
-            66.667% {
-                box-shadow: 9984px 0 0 0 #121212, 9999px 0 0 0 #121212, 10014px 0 0 0 #121212;
-            }
-            83.333% {
-                box-shadow: 9984px 0 0 0 #121212, 9999px 0 0 0 #121212, 10014px -10px 0 0 #121212;
-            }
-            100% {
-                box-shadow: 9984px 0 0 0 #121212, 9999px 0 0 0 #121212, 10014px 0 0 0 #121212;
-            }
+        .typing-dot:nth-child(1) { animation-delay: 200ms; }
+        .typing-dot:nth-child(2) { animation-delay: 300ms; }
+        .typing-dot:nth-child(3) { animation-delay: 400ms; }
+
+        @keyframes typing {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0); }
         }
 
         /* Custom scrollbar */
@@ -263,13 +341,8 @@
                 <strong style="color: var(--primary-dark);">AI Agent</strong> powered by Langchain and ChromaDB.
             </p>
         </div>
-    </footer>
-
-    <script>
-        const API_URL = 'http://localhost:8000';
-        let conversationId = null;
-        let userId = `user_${Math.floor(Math.random() * 10000)}`;
-        let isProcessing = false;        // Check server health on load
+    </footer>    <!-- Chat Interface Script -->
+    <script src="chat.js">
         window.onload = async function() {
             try {
                 const response = await fetch(`${API_URL}/health`);
@@ -322,14 +395,8 @@
             // Add user message to chat
             addMessageToChat('user', message);
             userInput.value = '';
-            
-            // Add loading message
-            const loadingId = addMessageToChat('bot', `
-                <div style="display: flex; align-items: center;">
-                    <div style="margin-right: 10px;">Thinking</div>
-                    <div class="dot-typing"></div>
-                </div>
-            `);
+                  // Add loading message
+            const loadingId = addMessageToChat('bot', createTypingIndicator());
             
             try {
                 const response = await fetch(`${API_URL}/query`, {
@@ -394,28 +461,40 @@
         }        // Replace a message in the chat container
         function replaceMessage(messageId, sender, text) {
             const messageDiv = document.getElementById(messageId);
-            if (messageDiv) {
-                // Format code blocks
+            if (messageDiv) {                // Format the message text
                 let formattedText = text;
                 
-                // Replace code blocks with proper HTML
+                // First escape HTML to prevent XSS
+                formattedText = formattedText
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;');
+                
+                // Format code blocks with syntax highlighting
                 formattedText = formattedText.replace(/```(\w*)([\s\S]*?)```/g, function(match, language, code) {
-                    return `<pre><code class="language-${language}">${code.trim()}</code></pre>`;
+                    return `<pre><code class="language-${language || 'plaintext'}">${code.trim()}</code></pre>`;
                 });
                 
-                // Replace inline code
+                // Format inline code
                 formattedText = formattedText.replace(/`([^`]+)`/g, '<code>$1</code>');
                 
-                // Handle simple line breaks (preserve them)
-                formattedText = formattedText.replace(/\n/g, '<br>');
+                // Split text into paragraphs on double newlines
+                const paragraphs = formattedText.split(/\n\n+/);
                 
-                // Now wrap paragraphs (separate by double line breaks)
-                formattedText = formattedText.split('<br><br>').map(para => 
-                    para.trim() ? `<p>${para}</p>` : ''
-                ).join('');
-                
-                // Fix any double <br> tags that might have been created
-                formattedText = formattedText.replace(/<br><br>/g, '<br>');
+                // Process each paragraph
+                formattedText = paragraphs.map(para => {
+                    para = para.trim();
+                    if (!para) return '';
+                    
+                    // Don't wrap code blocks in paragraphs
+                    if (para.startsWith('<pre>')) return para;
+                    
+                    // Replace single newlines with <br>
+                    para = para.replace(/\n/g, '<br>');
+                    
+                    // Wrap in paragraph tags
+                    return `<p>${para}</p>`;
+                }).join('\n');
                 
                 messageDiv.innerHTML = formattedText || text;
                 
@@ -430,7 +509,16 @@
                 e.preventDefault();
                 sendMessage();
             }
-        });
+        });    // Create typing indicator
+    function createTypingIndicator() {
+        return `
+            <div class="typing-indicator">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+        `;
+    }
     </script>
 </body>
 </html>

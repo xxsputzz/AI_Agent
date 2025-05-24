@@ -143,8 +143,7 @@ class ConversationMemory:
             # Remove oldest entries
             if ids_to_remove:
                 self.collection.delete(ids=ids_to_remove)
-    
-    def get_relevant_history(self, query, n_results=3):
+      def get_relevant_history(self, query, n_results=3):
         """Get history relevant to the current query"""
         if not self.collection or self.collection.count() == 0:
             return []
@@ -152,23 +151,48 @@ class ConversationMemory:
         # Search for relevant history based on query
         results = self.collection.query(
             query_texts=[query],
-            n_results=min(n_results, self.collection.count())
+            n_results=min(n_results, self.collection.count()),
+            # Include metadata for better context filtering
+            include_metadata=True
         )
         
-        # Return the documents
-        return results['documents'][0] if results['documents'] else []
-    
-    def format_for_context(self, query, n_results=2):
+        if not results['documents']:
+            return []
+        
+        # Sort by timestamp if available in metadata
+        history_with_time = []
+        for doc, meta in zip(results['documents'][0], results['metadatas'][0]):
+            timestamp = meta.get('timestamp', 0)
+            history_with_time.append((timestamp, doc))
+            
+        # Sort by timestamp and extract just the documents
+        sorted_history = [h[1] for h in sorted(history_with_time, key=lambda x: x[0])]
+        return sorted_history
+      def format_for_context(self, query, n_results=2):
         """Format relevant history as context for the LLM"""
         relevant_history = self.get_relevant_history(query, n_results)
         
         if not relevant_history:
             return ""
+        
+        # Format history in a clear, readable way    
+        formatted_history = []
+        for interaction in relevant_history:
+            # Split into user/assistant parts if possible
+            parts = interaction.split('\n')
+            # Only include parts that are properly formatted
+            formatted_parts = []
+            for part in parts:
+                if part.startswith('User:') or part.startswith('Assistant:'):
+                    formatted_parts.append(part.strip())
+            if formatted_parts:
+                formatted_history.append('\n'.join(formatted_parts))
+        
+        if not formatted_history:
+            return ""
             
-        formatted = "Relevant conversation history:\n"
-        for i, interaction in enumerate(relevant_history):
-            formatted += f"{interaction}\n"
-            
+        # Join with clear separators
+        formatted = "Previous context:\n" + "\n---\n".join(formatted_history)
         return formatted
 
 

@@ -10,12 +10,12 @@ def ai_agent(query, user_id=USER_ID):
     """Main agent function that orchestrates the response pipeline"""
     print(f"Processing query: '{query}'")
     
-    # Check if this is a simple greeting
+    # Only treat as greeting if it's JUST a greeting without a question
     if is_greeting(query):
-        print("Detected simple greeting, using simple response")
+        print("Detected simple greeting without question, using simple response")
         return get_simple_greeting()
     
-    # For non-greeting queries, use the full pipeline
+    # Process normally if there's more content than just a greeting
     history_chunks = get_relevant_history(user_id, query)
     doc_chunks, doc_metadata = get_relevant_documents(query)
     

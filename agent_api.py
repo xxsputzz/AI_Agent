@@ -34,13 +34,13 @@ app.add_middleware(
     allow_headers=["*"],  # Allow all headers
 )
 
-# Mount the static files directory
+# Mount the static files directory once
 static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
-if os.path.exists(static_dir):
+if os.path.exists(static_dir) and not any(route.name == "static" for route in app.routes):
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
     print(f"Static files mounted from {static_dir}")
 else:
-    print(f"Warning: Static directory not found at {static_dir}")
+    print(f"Note: Static files already mounted or directory not found at {static_dir}")
 
 # Dictionary to store ongoing conversations
 conversations = {}
@@ -175,6 +175,7 @@ async def list_conversations():
 
 if __name__ == "__main__":
     import uvicorn
+    import socket
     
     # Mount the static files directory
     static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
@@ -183,5 +184,21 @@ if __name__ == "__main__":
     else:
         print(f"Warning: Static directory not found at {static_dir}")
     
-    # Run the server
-    uvicorn.run("agent_api:app", host="0.0.0.0", port=8000, reload=True)
+    # Try ports in sequence until we find an available one
+    ports = [8000, 8001, 8002, 8003]
+    
+    for port in ports:
+        try:
+            # Test if port is available
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.bind(('0.0.0.0', port))
+                s.close()
+            
+            print(f"Starting server on port {port}")
+            uvicorn.run("agent_api:app", host="0.0.0.0", port=port, reload=True)
+            break
+        except OSError as e:
+            if port == ports[-1]:
+                print(f"Error: All ports {ports} are in use. Please free up one of these ports and try again.")
+                raise e
+            print(f"Port {port} is in use, trying next port...")
